@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員二維碼管理系統</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        #warning {
+            color: red;
+            font-weight: bold;
+        }
+        img {
+            width: 50px; /* 可以根據需要調整大小 */
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>會員二維碼管理系統</h1>
+
+<div id="warning" style="display: none;">二維碼數量不足，請勿進行回收。</div>
+
+<form id="memberForm">
+    <label for="name">家庭成員姓名:</label>
+    <input type="text" id="name" required>
+    <label for="quantity">請求數量:</label>
+    <input type="number" id="quantity" min="1" required>
+    <input type="submit" value="請求二維碼">
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>家庭成員</th>
+            <th>分配的二維碼</th>
+        </tr>
+    </thead>
+    <tbody id="memberList"></tbody>
+</table>
+
+<script>
+    const qrCodes = [
+        'https://drive.google.com/uc?id=1fSqXtaCiahMEPBXIFnbSykgbH3EBWXcb', // IMG-20250427-WA0005
+        'https://drive.google.com/uc?id=1fTjf3ZEPxAn3nA81bYaAlTjnCgBPK1L3', // IMG-20250722-WA0004
+        'https://drive.google.com/uc?id=1fVUuH9_qdZh32R-qOR1WgdMgMtG5Fq5O', // IMG-20250722-WA0003
+        'https://drive.google.com/uc?id=1fYFjAlXY-5XvVBOEbmqtKyIiu1_vxn0T', // IMG-20250722-WA0005
+        'https://drive.google.com/uc?id=1fYix4uSq9hOWOt27geH0ZJcHyzA0rc_t', // IMG-20250722-WA0002
+        'https://drive.google.com/uc?id=1fbneoiPdkamG8PLJYzQQvOinboMxwfR6', // IMG-20250722-WA0008
+        'https://drive.google.com/uc?id=1fdX4S1M6vrnkU7FUty8TWkLV_RdQfNS8', // IMG-20250722-WA0007
+        'https://drive.google.com/uc?id=1ffjZ0VimIiOd40FTmrIM7cuxcPyyztt1', // IMG-20250722-WA0006
+        'https://drive.google.com/uc?id=1fOp15oaRxn2R0IzAXB3uygYeIMXOW0Xu'  // IMG-20250722-WA0009
+    ];
+
+    const usedCodes = new Map();
+
+    document.getElementById('memberForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const memberName = document.getElementById('name').value;
+
+        if (usedCodes.has(memberName)) {
+            alert('該成員已請求過二維碼！');
+            return;
+        }
+
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const availableCodes = qrCodes.filter(code => ![...usedCodes.values()].flat().includes(code));
+
+        if (availableCodes.length < quantity) {
+            document.getElementById('warning').style.display = 'block';
+            return;
+        } else {
+            document.getElementById('warning').style.display = 'none';
+        }
+
+        const assignedCodes = availableCodes.slice(0, quantity);
+        usedCodes.set(memberName, assignedCodes);
+
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `<td>${memberName}</td><td>${assignedCodes.map(code => `<img src="${code}" alt="${code}">`).join(' ')}</td>`;
+        document.getElementById('memberList').appendChild(newRow);
+
+        document.getElementById('name').value = '';
+        document.getElementById('quantity').value = '';
+    });
+
+    // 每天凌晨12時清除使用紀錄
+    function resetUsedCodes() {
+        usedCodes.clear();
+        document.getElementById('memberList').innerHTML = '';
+    }
+
+    // 設置定時器
+    const now = new Date();
+    const msUntilMidnight = (24 * 60 * 60 * 1000) - (now.getHours() * 60 * 60 * 1000 + now.getMinutes() * 60 * 1000 + now.getSeconds() * 1000);
+    setTimeout(() => {
+        resetUsedCodes();
+        setInterval(resetUsedCodes, 24 * 60 * 60 * 1000); // 每24小時重置
+    }, msUntilMidnight);
+</script>
+
+</body>
+</html>
